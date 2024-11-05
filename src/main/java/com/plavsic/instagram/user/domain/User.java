@@ -52,7 +52,6 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "following_id")
     )
     @ToString.Exclude
-
     private Set<User> following = new HashSet<>();
 
     @ManyToMany(mappedBy = "following")

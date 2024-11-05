@@ -35,7 +35,7 @@ public class Post {
     @ToString.Exclude
     private Set<User> numberOfLikes = new HashSet<>();
 
-    @OneToMany(mappedBy = "post",cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "post",cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @ToString.Exclude
     private Set<Comment> comments = new HashSet<>();
 
@@ -44,6 +44,23 @@ public class Post {
     public void addComment(Comment comment) {
         comment.setPost(this);
         this.comments.add(comment);
+    }
+
+    public void removeComment(Comment comment) {
+        this.comments.remove(comment);
+        comment.setPost(null);
+    }
+
+    public void addLike(User user) {
+        this.numberOfLikes.add(user);
+    }
+
+    public void removeLike(User user) {
+        this.numberOfLikes.remove(user);
+    }
+
+    public boolean isLikedBy(User user) {
+        return this.numberOfLikes.contains(user);
     }
 
     @Override

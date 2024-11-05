@@ -1,4 +1,4 @@
 package com.plavsic.instagram.post.dto;
 
-public record CommentRequest() {
+public record CommentRequest(String content) {
 }

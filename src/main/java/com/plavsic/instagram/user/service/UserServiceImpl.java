@@ -56,8 +56,8 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserResponse followUser(UserDetails currentUser,Long userToFollow) {
-        User user = userRepository.findByUsername(currentUser.getUsername()).get();
-        User userFollow = userRepository.findById(userToFollow).get();
+        User user = userRepository.findByUsername(currentUser.getUsername()).orElseThrow(UserNotFoundException::new);
+        User userFollow = userRepository.findById(userToFollow).orElseThrow(UserNotFoundException::new);
         if(Objects.equals(user.getUsername(), userFollow.getUsername())) {
             return null;
         }
@@ -68,8 +68,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse unfollowUser(UserDetails currentUser,Long userToUnfollow) {
-        User user = userRepository.findByUsername(currentUser.getUsername()).get();
-        User userUnfollow = userRepository.findById(userToUnfollow).get();
+        User user = userRepository.findByUsername(currentUser.getUsername()).orElseThrow(UserNotFoundException::new);
+        User userUnfollow = userRepository.findById(userToUnfollow).orElseThrow(UserNotFoundException::new);
         user.unfollow(userUnfollow);
         userRepository.save(user);
         return null;
