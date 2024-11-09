@@ -1,8 +1,9 @@
 package com.plavsic.instagram.post.controller;
 
 
-import com.plavsic.instagram.post.dto.CommentRequest;
-import com.plavsic.instagram.post.dto.CommentResponse;
+import com.plavsic.instagram.post.dto.comment.CommentRequest;
+import com.plavsic.instagram.post.dto.comment.CommentResponse;
+import com.plavsic.instagram.post.dto.post.PostResponse;
 import com.plavsic.instagram.post.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,17 +27,24 @@ public class PostController {
      * POSTS
      */
 
-    // view posts
+    // view posts by user
+    @GetMapping("/{username}")
+    public ResponseEntity<List<PostResponse>> getUserPosts(@PathVariable String username) {
+        return new ResponseEntity<>(postService.getUserPosts(username),HttpStatus.OK);
+    }
 
-    // view one post
+    // view one post by id
+    @GetMapping("/post/{postId}")
+    public ResponseEntity<PostResponse> getPostById(@PathVariable Long postId) {
+        return new ResponseEntity<>(postService.getPost(postId),HttpStatus.OK);
+    }
 
     // create post
     @PostMapping
     public ResponseEntity<String> createPost(
             @AuthenticationPrincipal UserDetails currentUser,
             @RequestParam(value = "description",required = true) String description,
-            @RequestParam(value = "file",required = true) MultipartFile file
-                                            ) {
+            @RequestParam(value = "file",required = true) MultipartFile file) {
         if(description == null || description.isEmpty() || file == null || file.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
@@ -44,9 +52,23 @@ public class PostController {
         return new ResponseEntity<>("Post Created!", HttpStatus.CREATED);
     }
     // update post
+    @PutMapping("/post/{postId}")
+    public ResponseEntity<String> updatePost(
+            @AuthenticationPrincipal UserDetails currentUser,
+            @PathVariable Long postId,
+            @RequestParam(value = "description",required = true) String description){
+        postService.updatePost(currentUser,postId,description);
+        return new ResponseEntity<>("Successfully updated post!",HttpStatus.OK);
+    }
 
     // delete post
-
+    @DeleteMapping("/post/{postId}")
+    public ResponseEntity<String> deletePost(
+            @AuthenticationPrincipal UserDetails currentUser,
+            @PathVariable Long postId) {
+        postService.deletePost(currentUser,postId);
+        return new ResponseEntity<>("Successfully deleted post!",HttpStatus.OK);
+    }
 
     /**
      * COMMENTS
@@ -68,6 +90,16 @@ public class PostController {
         return new ResponseEntity<>("Comment Added!", HttpStatus.CREATED);
     }
 
+    // update comment based on their ID
+    @PutMapping("/edit-comment/{commentId}")
+    public ResponseEntity<String> editComment(
+            @AuthenticationPrincipal UserDetails currentUser,
+            @RequestBody CommentRequest commentRequest,
+            @PathVariable Long commentId){
+        postService.updateComment(currentUser,commentId,commentRequest);
+        return new ResponseEntity<>("Comment Updated!",HttpStatus.OK);
+    }
+
     // remove comment based on their ID
     @DeleteMapping("/remove-comment/{commentId}")
     public ResponseEntity<String> removeComment(
@@ -83,8 +115,7 @@ public class PostController {
      * LIKE POSTS, UNLIKE POSTS
      */
 
-    // MAYBE CHECK IF POST IS ALREADY LIKED OR NOT
-    // e.g I CANNOT LIKE POST IF IT'S ALREADY LIKED
+
     // like specific post
     @PostMapping("/like-post/{postId}")
     public ResponseEntity<String> likePost(

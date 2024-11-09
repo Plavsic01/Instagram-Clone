@@ -3,7 +3,6 @@ package com.plavsic.instagram.user.controller;
 import com.plavsic.instagram.user.dto.UserRequest;
 import com.plavsic.instagram.user.dto.UserResponse;
 import com.plavsic.instagram.user.service.UserService;
-import com.plavsic.instagram.user.service.UserServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,15 +21,27 @@ public class UserController {
 
     @GetMapping("/{username}")
     public ResponseEntity<UserResponse> findByUsername(@PathVariable String username) {
-        UserServiceImpl userServiceImpl = (UserServiceImpl) userService;
-        return new ResponseEntity<>(userServiceImpl.findByUsername(username),HttpStatus.OK);
+        return new ResponseEntity<>(userService.findByUsername(username),HttpStatus.OK);
     }
 
 
     @PostMapping
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserRequest userRequest) {
-        UserResponse userResponse = userService.save(userRequest);
+        UserResponse userResponse = userService.createUser(userRequest);
         return new ResponseEntity<>(userResponse,HttpStatus.OK);
+    }
+
+//    @PutMapping("/{username}")
+//    public ResponseEntity<UserResponse> updateUserProfile(@Valid @RequestBody UserRequest userRequest,
+//                                                          @PathVariable String username) {
+//        UserResponse userResponse = userService.updateUser(username,userRequest);
+//        return new ResponseEntity<>(userResponse,HttpStatus.OK);
+//    }
+
+    @DeleteMapping("/{username}")
+    public ResponseEntity<String> deleteUser(@PathVariable String username) {
+        userService.deleteUser(username);
+        return new ResponseEntity<>("User deleted!",HttpStatus.OK);
     }
 
     @PostMapping("/follow/{userId}")

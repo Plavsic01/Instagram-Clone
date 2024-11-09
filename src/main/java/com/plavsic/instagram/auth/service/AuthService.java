@@ -39,13 +39,14 @@ public class AuthService {
     }
 
     public String signup(RegisterRequest registerRequest) {
-        userService.save(new UserRequest(
+        userService.createUser(new UserRequest(
                 registerRequest.username(),
                 registerRequest.password(),
                 registerRequest.firstName(),
                 registerRequest.lastName(),
                 registerRequest.email(),
-                null)); // ovo ce se promeniti
+                null,
+                null));
         return "User created";
     }
 

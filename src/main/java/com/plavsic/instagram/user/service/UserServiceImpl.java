@@ -11,14 +11,15 @@ import com.plavsic.instagram.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,20 +30,34 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
 
-    @Override
-    public Optional<UserResponse> findById(Long id) {
-        return Optional.empty();
-    }
+    public UserResponse findByUsername(String username){
+        UserResponse userResponse = userRepository.findByUsername(username)
+                .map(user -> new UserResponse(
+                        user.getId(),
+                        user.getUsername(),
+                        user.getFirstName(),
+                        user.getLastName(),
+                        user.getEmail(),
+                        user.getProfilePictureUrl(),
+                        user.getDescription(),
+                        user.getFollowers().stream().map(
+                                follower -> new FollowResponse(
+                                        follower.getId(),
+                                        follower.getUsername())).collect(Collectors.toSet()),
+                        user.getFollowing().stream().map(
+                                follower -> new FollowResponse(
+                                        follower.getId(),
+                                        follower.getUsername())).collect(Collectors.toSet())
+                ))
+                .orElseThrow(UserNotFoundException::new);
 
-    @Override
-    public List<UserResponse> findAll() {
-        return List.of();
+        return userResponse;
     }
 
 
     @Override
     @Transactional
-    public UserResponse save(UserRequest userRequest) {
+    public UserResponse createUser(UserRequest userRequest) {
         Role role = roleRepository.findByName("ROLE_USER").get();
         User user = modelMapper.map(userRequest, User.class);
         user.setId(null);
@@ -54,64 +69,50 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserResponse updateUser(String username, UserRequest userRequest) {
+        return null; // TODO
+    }
+
+
+
+    @Override
+    public void deleteUser(String username) {
+        User user = userRepository.findByUsername(username).orElseThrow(UserNotFoundException::new);
+        for(User follower: user.getFollowers()){
+            follower.getFollowing().remove(user);
+        }
+
+        for(User following: user.getFollowing()){
+            following.getFollowers().remove(user);
+        }
+        userRepository.delete(user);
+    }
+
+    @Override
     @Transactional
-    public UserResponse followUser(UserDetails currentUser,Long userToFollow) {
+    public void followUser(UserDetails currentUser, Long userToFollow) {
         User user = userRepository.findByUsername(currentUser.getUsername()).orElseThrow(UserNotFoundException::new);
         User userFollow = userRepository.findById(userToFollow).orElseThrow(UserNotFoundException::new);
         if(Objects.equals(user.getUsername(), userFollow.getUsername())) {
-            return null;
+            throw new ResponseStatusException(HttpStatus.CONFLICT);
         }
         user.follow(userFollow);
         userRepository.save(user);
-        return null;
     }
 
     @Override
-    public UserResponse unfollowUser(UserDetails currentUser,Long userToUnfollow) {
+    public void unfollowUser(UserDetails currentUser, Long userToUnfollow) {
         User user = userRepository.findByUsername(currentUser.getUsername()).orElseThrow(UserNotFoundException::new);
         User userUnfollow = userRepository.findById(userToUnfollow).orElseThrow(UserNotFoundException::new);
+        if(Objects.equals(user.getUsername(), userUnfollow.getUsername())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT);
+        }
         user.unfollow(userUnfollow);
         userRepository.save(user);
-        return null;
-    }
-
-    @Override
-    public UserResponse update(Long id, UserRequest userRequest) {
-        return null;
-    }
-
-
-
-
-    @Override
-    public boolean delete(Long id) {
-        return false;
     }
 
 
 
 
 
-    public UserResponse findByUsername(String username){
-        UserResponse userResponse = userRepository.findByUsername(username)
-                .map(user -> new UserResponse(
-                        user.getId(),
-                        user.getUsername(),
-                        user.getFirstName(),
-                        user.getLastName(),
-                        user.getEmail(),
-                        user.getProfilePictureUrl(),
-                        user.getFollowers().stream().map(
-                                follower -> new FollowResponse(
-                                follower.getId(),
-                                follower.getUsername())).collect(Collectors.toSet()),
-                        user.getFollowing().stream().map(
-                                follower -> new FollowResponse(
-                                        follower.getId(),
-                                        follower.getUsername())).collect(Collectors.toSet())
-                ))
-                .orElseThrow(UserNotFoundException::new);
-
-        return userResponse;
-    }
 }

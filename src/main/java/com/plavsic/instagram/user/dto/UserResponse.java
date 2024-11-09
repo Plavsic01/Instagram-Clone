@@ -9,5 +9,6 @@ public record UserResponse(Long id,
                            String lastName,
                            String email,
                            String profilePictureUrl,
+                           String description,
                            Set<FollowResponse> followers,
                            Set<FollowResponse> following){}

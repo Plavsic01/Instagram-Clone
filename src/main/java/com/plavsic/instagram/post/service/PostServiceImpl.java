@@ -2,8 +2,9 @@ package com.plavsic.instagram.post.service;
 
 import com.plavsic.instagram.post.domain.Comment;
 import com.plavsic.instagram.post.domain.Post;
-import com.plavsic.instagram.post.dto.CommentRequest;
-import com.plavsic.instagram.post.dto.CommentResponse;
+import com.plavsic.instagram.post.dto.comment.CommentRequest;
+import com.plavsic.instagram.post.dto.comment.CommentResponse;
+import com.plavsic.instagram.post.dto.post.PostResponse;
 import com.plavsic.instagram.post.exception.CommentNotFoundException;
 import com.plavsic.instagram.post.exception.PostNotFoundException;
 import com.plavsic.instagram.post.repository.CommentRepository;
@@ -13,10 +14,10 @@ import com.plavsic.instagram.user.exception.UserNotFoundException;
 import com.plavsic.instagram.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -28,7 +29,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +39,7 @@ public class PostServiceImpl implements PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
+    private final ModelMapper modelMapper;
 
 
     /*
@@ -46,13 +47,19 @@ public class PostServiceImpl implements PostService {
      */
 
     @Override
-    public List<Post> getPosts() {
-        return List.of();
+    public List<PostResponse> getUserPosts(String username) {
+        User user = getUserByUsername(username);
+        return postRepository.findByCreatedBy(user).stream().map(post -> new PostResponse(post.getId(),
+                post.getDescription(),
+                post.getCreatedAt(),
+                post.getImageUrl()
+        )).toList();
     }
 
     @Override
-    public Post getPost(Long id) {
-        return null;
+    public PostResponse getPost(Long id) {
+        Post post = getPostById(id);
+        return new PostResponse(post.getId(),post.getDescription(),post.getCreatedAt(),post.getImageUrl());
     }
 
     @Override
@@ -70,37 +77,34 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public void likePost(UserDetails currentUser, Long postId) {
+    @Transactional
+    public void updatePost(UserDetails currentUser,Long postId,String description) {
         User user = getUserByUsername(currentUser.getUsername());
         Post post = getPostById(postId);
-
-        if (post.isLikedBy(user)) {
-            throw new ResponseStatusException(HttpStatus.NO_CONTENT,"User has already liked that post!");
+        if(!user.getUsername().equals(post.getCreatedBy().getUsername())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
-        post.addLike(user);
+        post.setDescription(description);
         postRepository.save(post);
+    }
+
+    @Override
+    public void deletePost(UserDetails currentUser,Long postId) {
+        Post post = getPostById(postId);
+        if(!post.getCreatedBy().getUsername().equals(currentUser.getUsername())){
+               throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        postRepository.delete(post);
+    }
+
+    @Override
+    public void likePost(UserDetails currentUser, Long postId) {
+        postLikeOrUnlike(currentUser,postId,true);
     }
 
     @Override
     public void unlikePost(UserDetails currentUser, Long postId) {
-        User user = getUserByUsername(currentUser.getUsername());
-        Post post = getPostById(postId);
-
-        if(!post.isLikedBy(user)) {
-            throw new ResponseStatusException(HttpStatus.NO_CONTENT,"User has not liked that post!");
-        }
-        post.removeLike(user);
-        postRepository.save(post);
-    }
-
-    @Override
-    public void updatePost(Post post) {
-
-    }
-
-    @Override
-    public void deletePost(Post post) {
-
+        postLikeOrUnlike(currentUser,postId,false);
     }
 
 
@@ -120,6 +124,17 @@ public class PostServiceImpl implements PostService {
         comment.setCreatedBy(user);
         comment.setContent(commentRequest.content());
         post.addComment(comment);
+        commentRepository.save(comment);
+    }
+
+    @Override
+    public void updateComment(UserDetails currentUser, Long commentId, CommentRequest commentRequest) {
+        User user = getUserByUsername(currentUser.getUsername());
+        Comment comment = getCommentById(commentId);
+        if(!user.getUsername().equals(comment.getCreatedBy().getUsername())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        comment.setContent(commentRequest.content());
         commentRepository.save(comment);
     }
 
@@ -157,6 +172,25 @@ public class PostServiceImpl implements PostService {
 
     private Comment getCommentById(Long id) {
         return commentRepository.findById(id).orElseThrow(() -> new CommentNotFoundException("Comment not found!"));
+    }
+
+    private void postLikeOrUnlike(UserDetails currentUser, Long postId,boolean isLike) {
+        User user = getUserByUsername(currentUser.getUsername());
+        Post post = getPostById(postId);
+        if(isLike){
+            if (post.isLikedBy(user)) {
+                throw new ResponseStatusException(HttpStatus.NO_CONTENT,"User has already liked that post!");
+            }
+            post.addLike(user);
+            postRepository.save(post);
+            return;
+        }
+
+        if(!post.isLikedBy(user)) {
+            throw new ResponseStatusException(HttpStatus.NO_CONTENT,"User has not liked that post!");
+        }
+        post.removeLike(user);
+        postRepository.save(post);
     }
 
 

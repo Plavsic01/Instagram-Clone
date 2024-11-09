@@ -7,4 +7,5 @@ public record UserRequest(@NotNull @NotEmpty @NotBlank String username,
                           @NotNull @NotEmpty @NotBlank String firstName,
                           @NotNull @NotEmpty @NotBlank String lastName,
                           @NotNull @Email @NotEmpty @NotBlank String email,
-                          String profilePictureUrl){}
+                          String profilePictureUrl,
+                          String description){}

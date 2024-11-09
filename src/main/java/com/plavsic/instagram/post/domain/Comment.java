@@ -24,5 +24,4 @@ public class Comment {
     private LocalDateTime createdAt;
     @ManyToOne
     private User createdBy;
-//    private int likes;
 }
