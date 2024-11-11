@@ -1,6 +1,7 @@
 package com.plavsic.instagram.auth.userDetails;
 
 import com.plavsic.instagram.user.domain.User;
+import com.plavsic.instagram.user.exception.UserNotFoundException;
 import com.plavsic.instagram.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -21,8 +22,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-       User user = userRepository.findByUsername(username).get();
-
+       User user = userRepository.findByUsername(username).orElseThrow(UserNotFoundException::new);
         Set<GrantedAuthority> grantedAuthorities = user.getRoles()
                 .stream()
                 .map(role -> new SimpleGrantedAuthority(role.getName()))

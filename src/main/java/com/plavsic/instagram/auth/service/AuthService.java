@@ -1,7 +1,6 @@
 package com.plavsic.instagram.auth.service;
 
 import com.plavsic.instagram.auth.dto.LoginRequest;
-import com.plavsic.instagram.auth.dto.RegisterRequest;
 import com.plavsic.instagram.auth.userDetails.CustomUserDetails;
 import com.plavsic.instagram.auth.util.JwtTokenUtil;
 import com.plavsic.instagram.user.dto.UserRequest;
@@ -38,15 +37,8 @@ public class AuthService {
         return jwtTokenUtil.generateToken(customUserDetails);
     }
 
-    public String signup(RegisterRequest registerRequest) {
-        userService.createUser(new UserRequest(
-                registerRequest.username(),
-                registerRequest.password(),
-                registerRequest.firstName(),
-                registerRequest.lastName(),
-                registerRequest.email(),
-                null,
-                null));
+    public String signup(UserRequest registerRequest) {
+        userService.createUser(registerRequest);
         return "User created";
     }
 

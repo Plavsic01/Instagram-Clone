@@ -5,7 +5,9 @@ import com.plavsic.instagram.user.domain.User;
 import com.plavsic.instagram.user.dto.FollowResponse;
 import com.plavsic.instagram.user.dto.UserRequest;
 import com.plavsic.instagram.user.dto.UserResponse;
+import com.plavsic.instagram.user.exception.EmailAlreadyExistsException;
 import com.plavsic.instagram.user.exception.UserNotFoundException;
+import com.plavsic.instagram.user.exception.UsernameAlreadyExistsException;
 import com.plavsic.instagram.user.repository.RoleRepository;
 import com.plavsic.instagram.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -58,11 +60,17 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserResponse createUser(UserRequest userRequest) {
+        checkIfUsernameAndEmailExists(userRequest.username(), userRequest.email());
         Role role = roleRepository.findByName("ROLE_USER").get();
         User user = modelMapper.map(userRequest, User.class);
         user.setId(null);
         user.setPassword(new BCryptPasswordEncoder().encode(user.getPassword()));
-        user.setProfilePictureUrl("url://path");
+        if(userRequest.profilePictureUrl().isEmpty() || userRequest.profilePictureUrl() == null){
+            user.setProfilePictureUrl("https://static.vecteezy.com/system/resources/previews/002/002/403/non_2x/man-with-beard-avatar-character-isolated-icon-free-vector.jpg");
+        }else{
+            user.setProfilePictureUrl(userRequest.profilePictureUrl());
+        }
+        user.setDescription(userRequest.description());
         user.setRoles(new HashSet<>(List.of(role)));
         user = userRepository.save(user);
         return null;
@@ -112,7 +120,15 @@ public class UserServiceImpl implements UserService {
     }
 
 
+    private void checkIfUsernameAndEmailExists(String username, String email) {
+        if(userRepository.existsByUsername(username)){
+            throw new UsernameAlreadyExistsException(username);
+        }
 
+        if(userRepository.existsByEmail(email)){
+            throw new EmailAlreadyExistsException(email);
+        }
+    }
 
 
 }

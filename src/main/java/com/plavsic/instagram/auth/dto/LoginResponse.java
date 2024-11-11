@@ -1,3 +1,5 @@
 package com.plavsic.instagram.auth.dto;
 
-public record LoginResponse(String token){}
+import com.plavsic.instagram.user.dto.UserResponse;
+
+public record LoginResponse(String token, UserResponse user) {}

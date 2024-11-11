@@ -52,14 +52,15 @@ public class PostServiceImpl implements PostService {
         return postRepository.findByCreatedBy(user).stream().map(post -> new PostResponse(post.getId(),
                 post.getDescription(),
                 post.getCreatedAt(),
-                post.getImageUrl()
+                post.getImageUrl(),
+                post.getNumberOfLikes().size()
         )).toList();
     }
 
     @Override
     public PostResponse getPost(Long id) {
         Post post = getPostById(id);
-        return new PostResponse(post.getId(),post.getDescription(),post.getCreatedAt(),post.getImageUrl());
+        return new PostResponse(post.getId(),post.getDescription(),post.getCreatedAt(),post.getImageUrl(),null);
     }
 
     @Override
@@ -115,6 +116,25 @@ public class PostServiceImpl implements PostService {
      */
 
     @Override
+    public List<CommentResponse> getComments(Long postId) {
+        List<Comment> comments = commentRepository.findByPostId(postId);
+        if(comments.isEmpty()) {
+            throw new CommentNotFoundException("Comments not found!");
+        }
+
+        return comments.stream().map(comment ->
+
+                        new CommentResponse(
+                                comment.getId(),
+                                comment.getCreatedBy().getUsername(),
+                                comment.getCreatedBy().getProfilePictureUrl(),
+                                comment.getContent(),
+                                comment.getCreatedAt()
+                                ))
+                .toList();
+    }
+
+    @Override
     public void createComment(UserDetails currentUser, Long postId, CommentRequest commentRequest) {
         User user = getUserByUsername(currentUser.getUsername());
         Post post = getPostById(postId);
@@ -126,6 +146,7 @@ public class PostServiceImpl implements PostService {
         post.addComment(comment);
         commentRepository.save(comment);
     }
+
 
     @Override
     public void updateComment(UserDetails currentUser, Long commentId, CommentRequest commentRequest) {
@@ -145,21 +166,7 @@ public class PostServiceImpl implements PostService {
         commentRepository.save(comment);
     }
 
-    @Override
-    public List<CommentResponse> getComments(Long postId) {
-        List<Comment> comments = commentRepository.findByPostId(postId);
-        if(comments.isEmpty()) {
-            throw new CommentNotFoundException("Comments not found!");
-        }
 
-        return comments.stream().map(comment ->
-                new CommentResponse(
-                        comment.getId(),
-                        comment.getCreatedBy().getUsername(),
-                        comment.getContent(),
-                        comment.getCreatedAt()))
-                .toList();
-    }
 
 
     private User getUserByUsername(String username) {
@@ -212,7 +219,7 @@ public class PostServiceImpl implements PostService {
             throw new RuntimeException(e);
         }
 
-        return filePath.toString();
+        return filePath.getFileName().toString();
     }
 }
 

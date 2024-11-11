@@ -39,6 +39,7 @@ public class SecurityConfig {
                 .sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> {
                     authorize.requestMatchers("/api/v1/auth/**").permitAll();
+                    authorize.requestMatchers("/api/v1/posts/**").hasRole("USER");
                     authorize.requestMatchers("/**").permitAll(); // ERROR HANDLING
                     authorize.requestMatchers(HttpMethod.OPTIONS,"/**").permitAll();
                     authorize.anyRequest().authenticated();

@@ -24,13 +24,6 @@ public class UserController {
         return new ResponseEntity<>(userService.findByUsername(username),HttpStatus.OK);
     }
 
-
-    @PostMapping
-    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserRequest userRequest) {
-        UserResponse userResponse = userService.createUser(userRequest);
-        return new ResponseEntity<>(userResponse,HttpStatus.OK);
-    }
-
 //    @PutMapping("/{username}")
 //    public ResponseEntity<UserResponse> updateUserProfile(@Valid @RequestBody UserRequest userRequest,
 //                                                          @PathVariable String username) {
