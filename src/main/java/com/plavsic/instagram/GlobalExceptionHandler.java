@@ -3,6 +3,7 @@ package com.plavsic.instagram;
 import com.plavsic.instagram.post.exception.CommentNotFoundException;
 import com.plavsic.instagram.post.exception.PostNotFoundException;
 import com.plavsic.instagram.user.exception.EmailAlreadyExistsException;
+import com.plavsic.instagram.user.exception.PermissionException;
 import com.plavsic.instagram.user.exception.UserNotFoundException;
 import com.plavsic.instagram.user.exception.UsernameAlreadyExistsException;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -46,6 +47,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UsernameAlreadyExistsException.class)
     public ResponseEntity<String> handleUsernameAlreadyExistsException(UsernameAlreadyExistsException e) {
         return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(PermissionException.class)
+    public ResponseEntity<String> handlePermissionException(PermissionException e) {
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(EmailAlreadyExistsException.class)

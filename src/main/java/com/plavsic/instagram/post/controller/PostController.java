@@ -3,6 +3,8 @@ package com.plavsic.instagram.post.controller;
 
 import com.plavsic.instagram.post.dto.comment.CommentRequest;
 import com.plavsic.instagram.post.dto.comment.CommentResponse;
+import com.plavsic.instagram.post.dto.comment.CreatedCommentResponse;
+import com.plavsic.instagram.post.dto.comment.UpdatedCommentResponse;
 import com.plavsic.instagram.post.dto.post.PostResponse;
 import com.plavsic.instagram.post.service.PostService;
 import lombok.RequiredArgsConstructor;
@@ -82,22 +84,22 @@ public class PostController {
 
     // create comment for specific post
     @PostMapping("/add-comment/{postId}")
-    public ResponseEntity<String> addComment(
+    public ResponseEntity<CreatedCommentResponse> addComment(
             @AuthenticationPrincipal UserDetails currentUser,
             @RequestBody CommentRequest commentRequest,
             @PathVariable Long postId) {
-        postService.createComment(currentUser,postId,commentRequest);
-        return new ResponseEntity<>("Comment Added!", HttpStatus.CREATED);
+        CreatedCommentResponse comment = postService.createComment(currentUser,postId,commentRequest);
+        return new ResponseEntity<>(comment, HttpStatus.CREATED);
     }
 
     // update comment based on their ID
     @PutMapping("/edit-comment/{commentId}")
-    public ResponseEntity<String> editComment(
+    public ResponseEntity<UpdatedCommentResponse> editComment(
             @AuthenticationPrincipal UserDetails currentUser,
             @RequestBody CommentRequest commentRequest,
             @PathVariable Long commentId){
-        postService.updateComment(currentUser,commentId,commentRequest);
-        return new ResponseEntity<>("Comment Updated!",HttpStatus.OK);
+        UpdatedCommentResponse updatedComment = postService.updateComment(currentUser,commentId,commentRequest);
+        return new ResponseEntity<>(updatedComment,HttpStatus.OK);
     }
 
     // remove comment based on their ID

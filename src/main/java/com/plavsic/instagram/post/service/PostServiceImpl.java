@@ -4,12 +4,15 @@ import com.plavsic.instagram.post.domain.Comment;
 import com.plavsic.instagram.post.domain.Post;
 import com.plavsic.instagram.post.dto.comment.CommentRequest;
 import com.plavsic.instagram.post.dto.comment.CommentResponse;
+import com.plavsic.instagram.post.dto.comment.CreatedCommentResponse;
+import com.plavsic.instagram.post.dto.comment.UpdatedCommentResponse;
 import com.plavsic.instagram.post.dto.post.PostResponse;
 import com.plavsic.instagram.post.exception.CommentNotFoundException;
 import com.plavsic.instagram.post.exception.PostNotFoundException;
 import com.plavsic.instagram.post.repository.CommentRepository;
 import com.plavsic.instagram.post.repository.PostRepository;
 import com.plavsic.instagram.user.domain.User;
+import com.plavsic.instagram.user.exception.PermissionException;
 import com.plavsic.instagram.user.exception.UserNotFoundException;
 import com.plavsic.instagram.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -28,6 +31,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -135,7 +139,7 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public void createComment(UserDetails currentUser, Long postId, CommentRequest commentRequest) {
+    public CreatedCommentResponse createComment(UserDetails currentUser, Long postId, CommentRequest commentRequest) {
         User user = getUserByUsername(currentUser.getUsername());
         Post post = getPostById(postId);
         Comment comment = new Comment();
@@ -144,24 +148,30 @@ public class PostServiceImpl implements PostService {
         comment.setCreatedBy(user);
         comment.setContent(commentRequest.content());
         post.addComment(comment);
-        commentRepository.save(comment);
+        comment = commentRepository.save(comment);
+        return new CreatedCommentResponse(comment.getId(),comment.getCreatedAt());
     }
 
 
     @Override
-    public void updateComment(UserDetails currentUser, Long commentId, CommentRequest commentRequest) {
+    public UpdatedCommentResponse updateComment(UserDetails currentUser, Long commentId, CommentRequest commentRequest) {
         User user = getUserByUsername(currentUser.getUsername());
         Comment comment = getCommentById(commentId);
         if(!user.getUsername().equals(comment.getCreatedBy().getUsername())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            throw new PermissionException("You do not have permission to update comment!");
         }
         comment.setContent(commentRequest.content());
-        commentRepository.save(comment);
+        comment.setCreatedAt(LocalDateTime.now());
+        comment = commentRepository.save(comment);
+        return new UpdatedCommentResponse(comment.getContent(),comment.getCreatedAt());
     }
 
     @Override
     public void removeComment(UserDetails currentUser,Long commentId) {
         Comment comment = getCommentById(commentId);
+        if(!comment.getCreatedBy().getUsername().equals(currentUser.getUsername())){
+            throw new PermissionException("You do not have permission to remove comment!");
+        }
         comment.getPost().removeComment(comment);
         commentRepository.save(comment);
     }

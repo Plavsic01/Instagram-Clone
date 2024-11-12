@@ -2,6 +2,8 @@ package com.plavsic.instagram.post.service;
 
 import com.plavsic.instagram.post.dto.comment.CommentRequest;
 import com.plavsic.instagram.post.dto.comment.CommentResponse;
+import com.plavsic.instagram.post.dto.comment.CreatedCommentResponse;
+import com.plavsic.instagram.post.dto.comment.UpdatedCommentResponse;
 import com.plavsic.instagram.post.dto.post.PostResponse;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,8 +19,8 @@ public interface PostService {
     PostResponse getPost(Long id);
     void likePost(UserDetails currentUser,Long postId);
     void unlikePost(UserDetails currentUser, Long postId);
-    void createComment(UserDetails currentUser,Long postId, CommentRequest commentRequest);
-    void updateComment(UserDetails currentUser,Long commentId, CommentRequest commentRequest);
+    CreatedCommentResponse createComment(UserDetails currentUser, Long postId, CommentRequest commentRequest);
+    UpdatedCommentResponse updateComment(UserDetails currentUser, Long commentId, CommentRequest commentRequest);
     void removeComment(UserDetails currentUser, Long commentId);
     List<CommentResponse> getComments(Long postId);
 

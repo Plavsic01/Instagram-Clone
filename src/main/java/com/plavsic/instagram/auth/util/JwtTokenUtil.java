@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 @Component
 public class JwtTokenUtil {
     private final String secret;
-    private final long expiration = 60 * 1000; // 60s * 1000 = 1 minute in milliseconds
+    private final long expiration = 60 * 1000 * 60; // 60s * 1000 = 1 minute in milliseconds
 
     public JwtTokenUtil(@Value("${secret}") String secret) {
         this.secret = secret;
