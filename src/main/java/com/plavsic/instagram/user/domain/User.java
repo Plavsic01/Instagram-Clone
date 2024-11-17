@@ -70,9 +70,13 @@ public class User {
         post.setCreatedBy(this);
     }
 
-    public void follow(User user) {
+    public boolean follow(User user) {
+        if(user.followers.contains(this)) {
+            return false;
+        }
         this.following.add(user);
         user.followers.add(this);
+        return true;
     }
 
     public void unfollow(User user) {

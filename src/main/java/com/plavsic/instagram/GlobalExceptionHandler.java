@@ -2,10 +2,7 @@ package com.plavsic.instagram;
 
 import com.plavsic.instagram.post.exception.CommentNotFoundException;
 import com.plavsic.instagram.post.exception.PostNotFoundException;
-import com.plavsic.instagram.user.exception.EmailAlreadyExistsException;
-import com.plavsic.instagram.user.exception.PermissionException;
-import com.plavsic.instagram.user.exception.UserNotFoundException;
-import com.plavsic.instagram.user.exception.UsernameAlreadyExistsException;
+import com.plavsic.instagram.user.exception.*;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -51,6 +48,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(PermissionException.class)
     public ResponseEntity<String> handlePermissionException(PermissionException e) {
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(UserFollowException.class)
+    public ResponseEntity<String> handleUserFollowException(UserFollowException e) {
         return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
     }
 

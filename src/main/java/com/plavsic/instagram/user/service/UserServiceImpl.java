@@ -3,9 +3,11 @@ package com.plavsic.instagram.user.service;
 import com.plavsic.instagram.user.domain.Role;
 import com.plavsic.instagram.user.domain.User;
 import com.plavsic.instagram.user.dto.FollowResponse;
+import com.plavsic.instagram.user.dto.SearchResponse;
 import com.plavsic.instagram.user.dto.UserRequest;
 import com.plavsic.instagram.user.dto.UserResponse;
 import com.plavsic.instagram.user.exception.EmailAlreadyExistsException;
+import com.plavsic.instagram.user.exception.UserFollowException;
 import com.plavsic.instagram.user.exception.UserNotFoundException;
 import com.plavsic.instagram.user.exception.UsernameAlreadyExistsException;
 import com.plavsic.instagram.user.repository.RoleRepository;
@@ -45,15 +47,29 @@ public class UserServiceImpl implements UserService {
                         user.getFollowers().stream().map(
                                 follower -> new FollowResponse(
                                         follower.getId(),
-                                        follower.getUsername())).collect(Collectors.toSet()),
+                                        follower.getUsername(),
+                                        follower.getProfilePictureUrl()
+                                )).collect(Collectors.toSet()),
                         user.getFollowing().stream().map(
                                 follower -> new FollowResponse(
                                         follower.getId(),
-                                        follower.getUsername())).collect(Collectors.toSet())
+                                        follower.getUsername(),
+                                        follower.getProfilePictureUrl()
+                                )).collect(Collectors.toSet())
                 ))
                 .orElseThrow(UserNotFoundException::new);
 
         return userResponse;
+    }
+
+    @Override
+    public List<SearchResponse> findByUsernameContaining(String username) {
+        return userRepository.findByUsernameContaining(username).stream().map(user ->
+                new SearchResponse(
+                        user.getId(),
+                        user.getUsername(),
+                        user.getProfilePictureUrl()
+                )).toList();
     }
 
 
@@ -98,25 +114,29 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void followUser(UserDetails currentUser, Long userToFollow) {
+    public FollowResponse followUser(UserDetails currentUser, Long userToFollow) {
         User user = userRepository.findByUsername(currentUser.getUsername()).orElseThrow(UserNotFoundException::new);
         User userFollow = userRepository.findById(userToFollow).orElseThrow(UserNotFoundException::new);
         if(Objects.equals(user.getUsername(), userFollow.getUsername())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT);
         }
-        user.follow(userFollow);
-        userRepository.save(user);
+        if(!user.follow(userFollow)){
+            throw new UserFollowException("You already follow this user!");
+        }
+        user = userRepository.save(user);
+        return new FollowResponse(user.getId(),user.getUsername(),user.getProfilePictureUrl());
     }
 
     @Override
-    public void unfollowUser(UserDetails currentUser, Long userToUnfollow) {
+    public FollowResponse unfollowUser(UserDetails currentUser, Long userToUnfollow) {
         User user = userRepository.findByUsername(currentUser.getUsername()).orElseThrow(UserNotFoundException::new);
         User userUnfollow = userRepository.findById(userToUnfollow).orElseThrow(UserNotFoundException::new);
         if(Objects.equals(user.getUsername(), userUnfollow.getUsername())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT);
         }
         user.unfollow(userUnfollow);
-        userRepository.save(user);
+        user = userRepository.save(user);
+        return new FollowResponse(user.getId(),user.getUsername(),user.getProfilePictureUrl());
     }
 
 

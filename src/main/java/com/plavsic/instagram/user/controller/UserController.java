@@ -1,15 +1,17 @@
 package com.plavsic.instagram.user.controller;
 
-import com.plavsic.instagram.user.dto.UserRequest;
+import com.plavsic.instagram.user.dto.FollowResponse;
+import com.plavsic.instagram.user.dto.SearchResponse;
 import com.plavsic.instagram.user.dto.UserResponse;
 import com.plavsic.instagram.user.service.UserService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 @RestController
@@ -31,6 +33,11 @@ public class UserController {
 //        return new ResponseEntity<>(userResponse,HttpStatus.OK);
 //    }
 
+    @GetMapping
+    public ResponseEntity<List<SearchResponse>> searchByUsername(@RequestParam(name = "username") String username) {
+        return new ResponseEntity<>(userService.findByUsernameContaining(username),HttpStatus.OK);
+    }
+
     @DeleteMapping("/{username}")
     public ResponseEntity<String> deleteUser(@PathVariable String username) {
         userService.deleteUser(username);
@@ -38,14 +45,14 @@ public class UserController {
     }
 
     @PostMapping("/follow/{userId}")
-    public ResponseEntity<UserResponse> followUser(@AuthenticationPrincipal UserDetails user, @PathVariable Long userId) {
-        userService.followUser(user,userId);
-        return null;
+    public ResponseEntity<FollowResponse> followUser(@AuthenticationPrincipal UserDetails user, @PathVariable Long userId) {
+        FollowResponse followResponse = userService.followUser(user,userId);
+        return new ResponseEntity<>(followResponse,HttpStatus.OK);
     }
 
     @PostMapping("/unfollow/{userId}")
-    public ResponseEntity<UserResponse> unfollowUser(@AuthenticationPrincipal UserDetails user, @PathVariable Long userId) {
-        userService.unfollowUser(user,userId);
-        return null;
+    public ResponseEntity<FollowResponse> unfollowUser(@AuthenticationPrincipal UserDetails user, @PathVariable Long userId) {
+        FollowResponse followResponse = userService.unfollowUser(user,userId);
+        return new ResponseEntity<>(followResponse,HttpStatus.OK);
     }
 }

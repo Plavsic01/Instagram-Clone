@@ -5,9 +5,11 @@ import com.plavsic.instagram.post.dto.comment.CommentRequest;
 import com.plavsic.instagram.post.dto.comment.CommentResponse;
 import com.plavsic.instagram.post.dto.comment.CreatedCommentResponse;
 import com.plavsic.instagram.post.dto.comment.UpdatedCommentResponse;
+import com.plavsic.instagram.post.dto.post.PostAndUserResponse;
 import com.plavsic.instagram.post.dto.post.PostResponse;
 import com.plavsic.instagram.post.service.PostService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,27 +33,40 @@ public class PostController {
 
     // view posts by user
     @GetMapping("/{username}")
-    public ResponseEntity<List<PostResponse>> getUserPosts(@PathVariable String username) {
-        return new ResponseEntity<>(postService.getUserPosts(username),HttpStatus.OK);
+    public ResponseEntity<List<PostResponse>> getUserPosts(
+            @AuthenticationPrincipal UserDetails currentUser,
+            @PathVariable String username) {
+        return new ResponseEntity<>(postService.getUserPosts(currentUser,username),HttpStatus.OK);
     }
 
     // view one post by id
-    @GetMapping("/post/{postId}")
-    public ResponseEntity<PostResponse> getPostById(@PathVariable Long postId) {
-        return new ResponseEntity<>(postService.getPost(postId),HttpStatus.OK);
+//    @GetMapping("/post/{postId}")
+//    public ResponseEntity<PostResponse> getPostById(@PathVariable Long postId) {
+//        return new ResponseEntity<>(postService.getPost(postId),HttpStatus.OK);
+//    }
+
+    // view all posts that current user follows
+    @GetMapping
+    public ResponseEntity<Page<PostAndUserResponse>> findAllByOrderByCreatedAtDesc(
+            @AuthenticationPrincipal UserDetails currentUser,
+            @RequestParam int page,
+            @RequestParam int size
+    )  {
+        Page<PostAndUserResponse> posts = postService.findPostsByUsersIFollow(currentUser,page,size);
+        return new ResponseEntity<>(posts,HttpStatus.OK);
     }
 
     // create post
     @PostMapping
-    public ResponseEntity<String> createPost(
+    public ResponseEntity<PostResponse> createPost(
             @AuthenticationPrincipal UserDetails currentUser,
             @RequestParam(value = "description",required = true) String description,
             @RequestParam(value = "file",required = true) MultipartFile file) {
         if(description == null || description.isEmpty() || file == null || file.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        postService.createPost(currentUser,file,description);
-        return new ResponseEntity<>("Post Created!", HttpStatus.CREATED);
+        PostResponse postResponse = postService.createPost(currentUser,file,description);
+        return new ResponseEntity<>(postResponse, HttpStatus.CREATED);
     }
     // update post
     @PutMapping("/post/{postId}")
@@ -120,21 +135,19 @@ public class PostController {
 
     // like specific post
     @PostMapping("/like-post/{postId}")
-    public ResponseEntity<String> likePost(
+    public ResponseEntity<Boolean> likePost(
             @AuthenticationPrincipal UserDetails currentUser,
             @PathVariable Long postId
     ){
-        postService.likePost(currentUser,postId);
-        return new ResponseEntity<>("Post Liked!", HttpStatus.CREATED);
+        return new ResponseEntity<>(postService.likePost(currentUser,postId), HttpStatus.CREATED);
     }
 
     // remove like from specific post
     @DeleteMapping("/unlike-post/{postId}")
-    public ResponseEntity<String> unlikePost(
+    public ResponseEntity<Boolean> unlikePost(
             @AuthenticationPrincipal UserDetails currentUser,
             @PathVariable Long postId
     ){
-        postService.unlikePost(currentUser,postId);
-        return new ResponseEntity<>("Post Unliked!", HttpStatus.CREATED);
+        return new ResponseEntity<>(postService.unlikePost(currentUser,postId), HttpStatus.CREATED);
     }
 }

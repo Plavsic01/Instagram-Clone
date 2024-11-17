@@ -41,6 +41,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> {
                     authorize.requestMatchers("/api/v1/auth/**").permitAll();
                     authorize.requestMatchers("/api/v1/posts/**").hasRole("USER");
+                    authorize.requestMatchers("/api/v1/users/**").hasRole("USER");
                     authorize.requestMatchers("/**").permitAll(); // ERROR HANDLING
                     authorize.requestMatchers(HttpMethod.OPTIONS,"/**").permitAll();
                     authorize.anyRequest().authenticated();
